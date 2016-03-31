@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		84FCDCD71CAD28F4000E8D2E /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84FCDCD61CAD28F4000E8D2E /* main.cpp */; };
+		84FCDCE01CAD293D000E8D2E /* Tokens.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84FCDCDE1CAD293D000E8D2E /* Tokens.cpp */; settings = {ASSET_TAGS = (); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +26,8 @@
 /* Begin PBXFileReference section */
 		84FCDCD31CAD28F4000E8D2E /* ToyInterpreter */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ToyInterpreter; sourceTree = BUILT_PRODUCTS_DIR; };
 		84FCDCD61CAD28F4000E8D2E /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		84FCDCDE1CAD293D000E8D2E /* Tokens.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Tokens.cpp; sourceTree = "<group>"; };
+		84FCDCDF1CAD293D000E8D2E /* Tokens.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Tokens.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +61,8 @@
 			isa = PBXGroup;
 			children = (
 				84FCDCD61CAD28F4000E8D2E /* main.cpp */,
+				84FCDCDE1CAD293D000E8D2E /* Tokens.cpp */,
+				84FCDCDF1CAD293D000E8D2E /* Tokens.hpp */,
 			);
 			path = ToyInterpreter;
 			sourceTree = "<group>";
@@ -119,6 +124,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				84FCDCD71CAD28F4000E8D2E /* main.cpp in Sources */,
+				84FCDCE01CAD293D000E8D2E /* Tokens.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
