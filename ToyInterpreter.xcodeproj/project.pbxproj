@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		84EB99291CAE4A5A00D2A886 /* AST.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84EB99271CAE4A5A00D2A886 /* AST.cpp */; settings = {ASSET_TAGS = (); }; };
+		84EB992C1CAE515400D2A886 /* Parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84EB992A1CAE515400D2A886 /* Parser.cpp */; settings = {ASSET_TAGS = (); }; };
 		84FCDCD71CAD28F4000E8D2E /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84FCDCD61CAD28F4000E8D2E /* main.cpp */; };
 		84FCDCE01CAD293D000E8D2E /* Tokens.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84FCDCDE1CAD293D000E8D2E /* Tokens.cpp */; settings = {ASSET_TAGS = (); }; };
 /* End PBXBuildFile section */
@@ -24,6 +26,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		84EB99271CAE4A5A00D2A886 /* AST.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AST.cpp; sourceTree = "<group>"; };
+		84EB99281CAE4A5A00D2A886 /* AST.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = AST.hpp; sourceTree = "<group>"; };
+		84EB992A1CAE515400D2A886 /* Parser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Parser.cpp; sourceTree = "<group>"; };
+		84EB992B1CAE515400D2A886 /* Parser.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Parser.hpp; sourceTree = "<group>"; };
 		84FCDCD31CAD28F4000E8D2E /* ToyInterpreter */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ToyInterpreter; sourceTree = BUILT_PRODUCTS_DIR; };
 		84FCDCD61CAD28F4000E8D2E /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		84FCDCDE1CAD293D000E8D2E /* Tokens.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Tokens.cpp; sourceTree = "<group>"; };
@@ -63,6 +69,10 @@
 				84FCDCD61CAD28F4000E8D2E /* main.cpp */,
 				84FCDCDE1CAD293D000E8D2E /* Tokens.cpp */,
 				84FCDCDF1CAD293D000E8D2E /* Tokens.hpp */,
+				84EB99271CAE4A5A00D2A886 /* AST.cpp */,
+				84EB99281CAE4A5A00D2A886 /* AST.hpp */,
+				84EB992A1CAE515400D2A886 /* Parser.cpp */,
+				84EB992B1CAE515400D2A886 /* Parser.hpp */,
 			);
 			path = ToyInterpreter;
 			sourceTree = "<group>";
@@ -123,6 +133,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				84EB992C1CAE515400D2A886 /* Parser.cpp in Sources */,
+				84EB99291CAE4A5A00D2A886 /* AST.cpp in Sources */,
 				84FCDCD71CAD28F4000E8D2E /* main.cpp in Sources */,
 				84FCDCE01CAD293D000E8D2E /* Tokens.cpp in Sources */,
 			);
@@ -241,6 +253,7 @@
 				84FCDCDC1CAD28F4000E8D2E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

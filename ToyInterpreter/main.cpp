@@ -8,13 +8,13 @@
 
 #include <iostream>
 #include "Tokens.hpp"
+#include "Parser.hpp"
 
 using namespace std;
 
 int main(int argc, const char * argv[]) {
-    // insert code here...
-    while(true){
-        std::cout << Lexer::getTok()<<endl;
-    }
+    cout<<">>>";
+    Parser::getNextToken();
+    Parser::MainLoop();
     return 0;
 }

@@ -18,7 +18,7 @@ enum Token{
 };
 
 class Lexer{
-private:
+public:
     static std::string IdentifierStr;
     static double NumVal;
 public:
