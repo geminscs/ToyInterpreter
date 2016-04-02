@@ -38,80 +38,79 @@ int Parser::GetTokPrecedence(){
     return TokPrec;
 }
 
-ExprAST* Parser::Error(const char *str){
+std::unique_ptr<ExprAST> Parser::LogError(const char *str){
     std::cout<<"Error: "<<str<<std::endl;
-    return NULL;
+    return nullptr;
 }
 
-PrototypeAST* Parser::ErrorP(const char *str){
-    Error(str);
-    return NULL;
+std::unique_ptr<PrototypeAST> Parser::LogErrorP(const char *str){
+    LogError(str);
+    return nullptr;
 }
 
-ExprAST* Parser::ParseExpresion(){
-    ExprAST *LHS = ParsePrimary();
+std::unique_ptr<ExprAST> Parser::ParseExpresion(){
+    auto LHS = ParsePrimary();
     if (!LHS) {
-        return NULL;
+        return nullptr;
     }
-    
-    return ParseBinopRHS(0, LHS);
+    return ParseBinopRHS(0, std::move(LHS));
 }
 
-ExprAST* Parser::ParseIdentifierExpr(){
+std::unique_ptr<ExprAST> Parser::ParseIdentifierExpr(){
     std::string IdName = Lexer::IdentifierStr;
     getNextToken();
     if(CurTok != '('){
-        return new VaribleExprAST(IdName);
+        return make_unique<VaribleExprAST>(IdName);
     }
     
     getNextToken();
-    std::vector<ExprAST*> Args;
+    std::vector<std::unique_ptr<ExprAST>> Args;
     if(CurTok != ')'){
         while (true) {
-            ExprAST *Arg = ParseExpresion();
+            auto Arg = ParseExpresion();
             if(!Arg){
-                return NULL;
+                return nullptr;
             }
-            Args.push_back(Arg);
+            Args.push_back(std::move(Arg));
             
             if(CurTok == ')'){
                 break;
             }
             
             if(CurTok != ','){
-                return Error("Expected ')' or ',' in argument list");
+                return LogError("Expected ')' or ',' in argument list");
             }
             getNextToken();
         }
     }
     
     getNextToken();
-    return new CallExprAST(IdName, Args);
+    return make_unique<CallExprAST>(IdName, std::move(Args));
 }
 
 
-ExprAST* Parser::ParseNumExpr(){
-    ExprAST *res = new NumExprAST(Lexer::NumVal);
+std::unique_ptr<ExprAST> Parser::ParseNumExpr(){
+    auto res = make_unique<NumExprAST>(Lexer::NumVal);
     getNextToken();
-    return res;
+    return std::move(res);
 }
 
 
-ExprAST* Parser::ParseParenExpr(){
+std::unique_ptr<ExprAST> Parser::ParseParenExpr(){
     getNextToken();
-    ExprAST *v = ParseExpresion();
+    auto v = ParseExpresion();
     if(!v){
-        return NULL;
+        return nullptr;
     }
     
     if(CurTok != ')'){
-        return Error("expected ')'");
+        return LogError("expected ')'");
     }
     getNextToken();
     return v;
 }
 
-ExprAST* Parser::ParsePrimary(){
+std::unique_ptr<ExprAST> Parser::ParsePrimary(){
     switch (CurTok) {
         case tokIdentifier:
             return  ParseIdentifierExpr();
@@ -120,10 +119,10 @@ ExprAST* Parser::ParsePrimary(){
         case '(':
             return ParseParenExpr();
         default:
-            return Error("unknown token when expecting an expression");
+            return LogError("unknown token when expecting an expression");
     }
 }
-ExprAST* Parser::ParseBinopRHS(int ExprPrec, ExprAST *LHS){
+std::unique_ptr<ExprAST> Parser::ParseBinopRHS(int ExprPrec, std::unique_ptr<ExprAST> LHS){
     while (true) {
         int TokPrec = GetTokPrecedence();
         if(TokPrec < ExprPrec){
@@ -132,34 +131,34 @@ ExprAST* Parser::ParseBinopRHS(int ExprPrec, ExprAST *LHS){
         
         int BinOp = CurTok;
         getNextToken();
-        ExprAST *RHS = ParsePrimary();
+        auto RHS = ParsePrimary();
         if(!RHS){
-            return NULL;
+            return nullptr;
         }
         
         int NextPrec = GetTokPrecedence();
         if (TokPrec < NextPrec) {
-            RHS = ParseBinopRHS(TokPrec + 1, RHS);
-            if (RHS == NULL) {
-                return NULL;
+            RHS = ParseBinopRHS(TokPrec + 1, std::move(RHS));
+            if (!RHS) {
+                return nullptr;
             }
         }
         
-        LHS = new BinaryExprAST(BinOp, LHS, RHS);
+        LHS = make_unique<BinaryExprAST>(BinOp, std::move(LHS), std::move(RHS));
     }
 }
 
 //todo function definition: def foo(x y) ->def foo(x, y) end
-PrototypeAST* Parser::ParsePrototype(){
+std::unique_ptr<PrototypeAST> Parser::ParsePrototype(){
     if (CurTok != tokIdentifier) {
-        return ErrorP("expected function name in prototype");
+        return LogErrorP("expected function name in prototype");
     }
     
     std::string funName = Lexer::IdentifierStr;
     getNextToken();
     
     if (CurTok != '(') {
-        return ErrorP("expected '(' in prototype");
+        return LogErrorP("expected '(' in prototype");
     }
     
     std::vector<std::string> Args;
@@ -168,58 +167,67 @@ PrototypeAST* Parser::ParsePrototype(){
     }
     
     if (CurTok != ')') {
-        return ErrorP("expected ')' in prototype");
+        return LogErrorP("expected ')' in prototype");
     }
     
     getNextToken();
     
-    return new PrototypeAST(funName, Args);
+    return make_unique<PrototypeAST>(funName, std::move(Args));
 }
 
-FunctionAST* Parser::ParseDefinition(){
+std::unique_ptr<FunctionAST> Parser::ParseDefinition(){
     getNextToken();
-    PrototypeAST *Proto = ParsePrototype();
+    auto Proto = ParsePrototype();
     if (!Proto) {
-        return NULL;
+        return nullptr;
     }
     //todo function only contains one expression -> block;
-    if (ExprAST *e = ParseExpresion()) {
-        return new FunctionAST(Proto, e);
+    if (auto e = ParseExpresion()) {
+        return make_unique<FunctionAST>(std::move(Proto), std::move(e));
     }
-    return NULL;
+    return nullptr;
 }
 
-FunctionAST* Parser::ParseTopLevelExpr(){
-    if (ExprAST *e = ParseExpresion()) {
-        PrototypeAST *Proto = new PrototypeAST("", std::vector<std::string>());
-        return new FunctionAST(Proto, e);
+std::unique_ptr<FunctionAST> Parser::ParseTopLevelExpr(){
+    if (auto e = ParseExpresion()) {
+        auto Proto = make_unique<PrototypeAST>("__anon_expr", std::vector<std::string>());
+        return make_unique<FunctionAST>(std::move(Proto), std::move(e));
     }
-    return NULL;
+    return nullptr;
 }
 
-PrototypeAST* Parser::ParseExtern(){
+std::unique_ptr<PrototypeAST> Parser::ParseExtern(){
     getNextToken();
     return ParsePrototype();
 }
 void Parser::HandleDefinition(){
-    if (ParseDefinition()) {
-        std::cout<<"parsed a function definition."<<std::endl;
+    if (auto FnAST = ParseDefinition()) {
+        if (auto *FnIR = FnAST->codegen()) {
+            std::cout<<"read function definition:";
+            FnIR->dump();
+        }
     }
     else{
         getNextToken();
     }
 }
 void Parser::HandleExtern(){
-    if (ParseExtern()) {
-        std::cout<<"parsed an extern."<<std::endl;
+    if (auto ProtoAST = ParseExpresion()) {
+        if (auto *FnIR = ProtoAST->codegen()) {
+            std::cout<<"read extern";
+            FnIR->dump();
+        }
     }
     else{
         getNextToken();
     }
 }
 void Parser::HandleTopLevelExpression(){
-    if (ParseTopLevelExpr()) {
-        std::cout<<"parsed a top-level expression."<<std::endl;
+    if (auto FnAST = ParseTopLevelExpr()) {
+        if (auto *FnIR = FnAST->codegen()) {
+            std::cout<<"read top-level expression";
+            FnIR->dump();
+        }
     }
     else{
         getNextToken();

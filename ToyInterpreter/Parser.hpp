@@ -23,22 +23,21 @@ public:
     static std::map<char, int> initMap();
     static int getNextToken();
     static int GetTokPrecedence();
-    static ExprAST *Error(const char *str);
-    static PrototypeAST *ErrorP(const char *str);
-    static ExprAST *ParseExpresion();
-    static ExprAST *ParseIdentifierExpr();
-    static ExprAST *ParseNumExpr();
-    static ExprAST *ParseParenExpr();
-    static ExprAST *ParsePrimary();
-    static ExprAST *ParseBinopRHS(int ExprPrec, ExprAST *LHS);
-    static PrototypeAST *ParsePrototype();
-    static FunctionAST *ParseDefinition();
-    static FunctionAST *ParseTopLevelExpr();
-    static PrototypeAST *ParseExtern();
+    static std::unique_ptr<ExprAST> LogError(const char *str);
+    static std::unique_ptr<PrototypeAST> LogErrorP(const char *str);
+    static std::unique_ptr<ExprAST> ParseExpresion();
+    static std::unique_ptr<ExprAST> ParseIdentifierExpr();
+    static std::unique_ptr<ExprAST> ParseNumExpr();
+    static std::unique_ptr<ExprAST> ParseParenExpr();
+    static std::unique_ptr<ExprAST> ParsePrimary();
+    static std::unique_ptr<ExprAST> ParseBinopRHS(int ExprPrec, std::unique_ptr<ExprAST>LHS);
+    static std::unique_ptr<PrototypeAST> ParsePrototype();
+    static std::unique_ptr<FunctionAST> ParseDefinition();
+    static std::unique_ptr<FunctionAST> ParseTopLevelExpr();
+    static std::unique_ptr<PrototypeAST> ParseExtern();
     static void HandleDefinition();
     static void HandleExtern();
     static void HandleTopLevelExpression();
     static void MainLoop();
-    
 };
 #endif /* Parser_hpp */
