@@ -39,5 +39,6 @@ public:
     static void HandleExtern();
     static void HandleTopLevelExpression();
     static void MainLoop();
+    
 };
 #endif /* Parser_hpp */

@@ -7,6 +7,7 @@
 //
 
 #include "AST.hpp"
+#include "Globals.hpp"
 
 Value *NumExprAST::codegen(){
     return ConstantFP::get(getGlobalContext(), APFloat(Val));
@@ -30,11 +31,13 @@ Value *BinaryExprAST::codegen(){
     
     switch (Op) {
         case '+':
-            return Globals::Builder.CreateAdd(L, R, "addtmp");
+            return Globals::Builder.CreateFAdd(L, R, "addtmp");
         case '-':
-            return Globals::Builder.CreateSub(L, R, "subtmp");
+            return Globals::Builder.CreateFSub(L, R, "subtmp");
         case '*':
-            return Globals::Builder.CreateMul(L, R, "multmp");
+            return Globals::Builder.CreateFMul(L, R, "multmp");
+        case '/':
+            return Globals::Builder.CreateFDiv(L, R, "divtmp");
         case '<':
             L = Globals::Builder.CreateFCmpULT(L, R, "cmptmp");
             return Globals::Builder.CreateUIToFP(L, Type::getDoubleTy(getGlobalContext()),"booltmp");
@@ -44,7 +47,8 @@ Value *BinaryExprAST::codegen(){
 }
 
 Value *CallExprAST::codegen(){
-    Function *CalleeF = Globals::TheModule->getFunction(Callee);
+    //Function *CalleeF = Globals::TheModule->getFunction(Callee);
+    Function *CalleeF = Globals::getFunction(Callee);
     if (!CalleeF) {
         return Globals::LogErrorV("unknown function referenced");
     }
@@ -81,8 +85,7 @@ std::string PrototypeAST::getName(){
 }
 
 Function *FunctionAST::codegen(){
-    Function *TheFunction = Globals::TheModule->getFunction(Proto->getName());
-    
+    /*Function *TheFunction = Globals::TheModule->getFunction(Proto->getName());
     if (!TheFunction) {
         TheFunction = Proto->codegen();
     }
@@ -93,6 +96,13 @@ Function *FunctionAST::codegen(){
     
     if (!TheFunction->empty()) {
         return (Function *)Globals::LogErrorV("function cannot be redefined");
+    }*/
+
+    auto &P = *Proto;
+    Globals::FunctionProtos[Proto->getName()] =std::move(Proto);
+    Function *TheFunction = Globals::getFunction(P.getName());
+    if (!TheFunction) {
+        return nullptr;
     }
     
     BasicBlock *BB = BasicBlock::Create(getGlobalContext(), "entry", TheFunction);
@@ -106,6 +116,7 @@ Function *FunctionAST::codegen(){
     if (Value *RetVal = Body->codegen()) {
         Globals::Builder.CreateRet(RetVal);
         verifyFunction(*TheFunction);
+        Globals::TheFPM->run(*TheFunction);
         return TheFunction;
     }
     

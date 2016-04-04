@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		84A22A881CB240A50054CF93 /* KaleidoscopeJIT.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84A22A861CB240A50054CF93 /* KaleidoscopeJIT.cpp */; settings = {ASSET_TAGS = (); COMPILER_FLAGS = "-fno-rtti"; }; };
 		84B9A2D71CAFA957001B6239 /* Globals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B9A2D51CAFA957001B6239 /* Globals.cpp */; settings = {ASSET_TAGS = (); }; };
 		84B9A3861CAFC8F1001B6239 /* BugpointPasses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 84B9A2DD1CAFC8F1001B6239 /* BugpointPasses.dylib */; };
 		84B9A3871CAFC8F1001B6239 /* clang in Frameworks */ = {isa = PBXBuildFile; fileRef = 84B9A2DE1CAFC8F1001B6239 /* clang */; };
@@ -192,6 +193,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		84A22A861CB240A50054CF93 /* KaleidoscopeJIT.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = KaleidoscopeJIT.cpp; sourceTree = "<group>"; };
+		84A22A871CB240A50054CF93 /* KaleidoscopeJIT.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = KaleidoscopeJIT.hpp; sourceTree = "<group>"; };
 		84B9A2D51CAFA957001B6239 /* Globals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Globals.cpp; sourceTree = "<group>"; };
 		84B9A2D61CAFA957001B6239 /* Globals.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Globals.hpp; sourceTree = "<group>"; };
 		84B9A2DB1CAFAA35001B6239 /* LLVMHead.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = LLVMHead.hpp; sourceTree = "<group>"; };
@@ -586,6 +589,7 @@
 				84B9A2F51CAFC8F1001B6239 /* libclangLex.a */,
 				84B9A2F61CAFC8F1001B6239 /* libclangParse.a */,
 				84B9A2F71CAFC8F1001B6239 /* libclangQuery.a */,
+				84B9A3011CAFC8F1001B6239 /* libclangTidyCERTModule.a */,
 				84B9A2F81CAFC8F1001B6239 /* libclangRename.a */,
 				84B9A2F91CAFC8F1001B6239 /* libclangRewrite.a */,
 				84B9A2FA1CAFC8F1001B6239 /* libclangRewriteFrontend.a */,
@@ -595,7 +599,6 @@
 				84B9A2FE1CAFC8F1001B6239 /* libclangStaticAnalyzerCore.a */,
 				84B9A2FF1CAFC8F1001B6239 /* libclangStaticAnalyzerFrontend.a */,
 				84B9A3001CAFC8F1001B6239 /* libclangTidy.a */,
-				84B9A3011CAFC8F1001B6239 /* libclangTidyCERTModule.a */,
 				84B9A3021CAFC8F1001B6239 /* libclangTidyCppCoreGuidelinesModule.a */,
 				84B9A3031CAFC8F1001B6239 /* libclangTidyGoogleModule.a */,
 				84B9A3041CAFC8F1001B6239 /* libclangTidyLLVMModule.a */,
@@ -754,6 +757,8 @@
 				84B9A2D51CAFA957001B6239 /* Globals.cpp */,
 				84B9A2D61CAFA957001B6239 /* Globals.hpp */,
 				84B9A2DB1CAFAA35001B6239 /* LLVMHead.hpp */,
+				84A22A861CB240A50054CF93 /* KaleidoscopeJIT.cpp */,
+				84A22A871CB240A50054CF93 /* KaleidoscopeJIT.hpp */,
 			);
 			path = ToyInterpreter;
 			sourceTree = "<group>";
@@ -814,6 +819,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				84A22A881CB240A50054CF93 /* KaleidoscopeJIT.cpp in Sources */,
 				84EB992C1CAE515400D2A886 /* Parser.cpp in Sources */,
 				84EB99291CAE4A5A00D2A886 /* AST.cpp in Sources */,
 				84FCDCD71CAD28F4000E8D2E /* main.cpp in Sources */,
@@ -915,6 +921,7 @@
 				HEADER_SEARCH_PATHS = /Users/admin/Documents/llvm/include;
 				LD_RUNPATH_SEARCH_PATHS = /Users/admin/Documents/llvm/lib;
 				LIBRARY_SEARCH_PATHS = /Users/admin/Documents/llvm/lib;
+				OTHER_LDFLAGS = "-lz";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -925,6 +932,7 @@
 				HEADER_SEARCH_PATHS = /Users/admin/Documents/llvm/include;
 				LD_RUNPATH_SEARCH_PATHS = /Users/admin/Documents/llvm/lib;
 				LIBRARY_SEARCH_PATHS = /Users/admin/Documents/llvm/lib;
+				OTHER_LDFLAGS = "-lz";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

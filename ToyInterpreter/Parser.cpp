@@ -7,9 +7,11 @@
 //
 
 #include "Parser.hpp"
+#include "Globals.hpp"
 
 int Parser::CurTok = 0;
 std::map<char, int> Parser::BinopPrecedence = initMap();
+
 
 std::map<char, int> Parser::initMap(){
     std::map<char, int> temp;
@@ -205,6 +207,8 @@ void Parser::HandleDefinition(){
         if (auto *FnIR = FnAST->codegen()) {
             std::cout<<"read function definition:";
             FnIR->dump();
+            Globals::TheJIT->addModule(std::move(Globals::TheModule));
+            Globals::InitializeModuleAndPassManger();
         }
     }
     else{
@@ -212,10 +216,11 @@ void Parser::HandleDefinition(){
     }
 }
 void Parser::HandleExtern(){
-    if (auto ProtoAST = ParseExpresion()) {
+    if (auto ProtoAST = ParseExtern()) {
         if (auto *FnIR = ProtoAST->codegen()) {
             std::cout<<"read extern";
             FnIR->dump();
+            Globals::FunctionProtos[ProtoAST->getName()] = std::move(ProtoAST);
         }
     }
     else{
@@ -227,6 +232,16 @@ void Parser::HandleTopLevelExpression(){
         if (auto *FnIR = FnAST->codegen()) {
             std::cout<<"read top-level expression";
             FnIR->dump();
+            
+            auto H = Globals::TheJIT->addModule(std::move(Globals::TheModule));
+            Globals::InitializeModuleAndPassManger();
+            
+            auto ExprSymbol = Globals::TheJIT->findSymbol("__anon_expr");
+            assert(ExprSymbol && "Function not found");
+            
+            double (*FP)() = (double (*)())(intptr_t)ExprSymbol.getAddress();
+            std::cout<<"Evaluated to "<<FP()<<std::endl;
+            Globals::TheJIT->removeModule(H);
         }
     }
     else{
