@@ -14,7 +14,12 @@ enum Token{
     tokDef = -2,
     tokExtern = -3,
     tokIdentifier = -4,
-    tokNum = -5
+    tokNum = -5,
+    tokIf = -6,
+    tokThen = -7,
+    tokElse = -8,
+    tokFor = -9,
+    tokIn = -10
 };
 
 class Lexer{

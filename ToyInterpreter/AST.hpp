@@ -70,4 +70,19 @@ public:
     FunctionAST(std::unique_ptr<PrototypeAST> proto, std::unique_ptr<ExprAST> body):Proto(std::move(proto)), Body(std::move(body)){}
     Function *codegen();
 };
+
+class IfExprAST : public ExprAST{
+    std::unique_ptr<ExprAST> Cond, Then, Else;
+public:
+    IfExprAST(std::unique_ptr<ExprAST> cond, std::unique_ptr<ExprAST> then, std::unique_ptr<ExprAST> eLse) : Cond(std::move(cond)), Then(std::move(then)), Else(std::move(eLse)){}
+    virtual Value *codegen();
+};
+
+class ForExprAst : public ExprAST{
+    std::string VarName;
+    std::unique_ptr<ExprAST> Start, End, Step, Body;
+public:
+    ForExprAst(const std::string &varName, std::unique_ptr<ExprAST> start, std::unique_ptr<ExprAST> end, std::unique_ptr<ExprAST> step, std::unique_ptr<ExprAST> body) : VarName(varName), Start(std::move(start)), End(std::move(end)), Step(std::move(step)), Body(std::move(body)){}
+    virtual Value *codegen();
+};
 #endif /* AST_hpp */

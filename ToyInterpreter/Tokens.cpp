@@ -34,6 +34,21 @@ int Lexer::getTok(){
         if(IdentifierStr == "extern"){
             return tokExtern;
         }
+        if (IdentifierStr == "if") {
+            return tokIf;
+        }
+        if (IdentifierStr == "then") {
+            return tokThen;
+        }
+        if (IdentifierStr == "else") {
+            return tokElse;
+        }
+        if (IdentifierStr == "for") {
+            return tokFor;
+        }
+        if (IdentifierStr == "in") {
+            return tokIn;
+        }
         return tokIdentifier;
     }
     //numbers

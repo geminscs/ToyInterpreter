@@ -120,6 +120,10 @@ std::unique_ptr<ExprAST> Parser::ParsePrimary(){
             return ParseNumExpr();
         case '(':
             return ParseParenExpr();
+        case tokIf:
+            return ParseIfExpr();
+        case tokFor:
+            return ParseForExpr();
         default:
             return LogError("unknown token when expecting an expression");
     }
@@ -207,14 +211,95 @@ void Parser::HandleDefinition(){
         if (auto *FnIR = FnAST->codegen()) {
             std::cout<<"read function definition:";
             FnIR->dump();
+#ifndef TARGETOBJ
             Globals::TheJIT->addModule(std::move(Globals::TheModule));
             Globals::InitializeModuleAndPassManger();
+#endif
         }
     }
     else{
         getNextToken();
     }
 }
+
+std::unique_ptr<ExprAST> Parser::ParseIfExpr(){
+    getNextToken();
+    
+    auto Cond = ParseExpresion();
+    if (!Cond) {
+        return nullptr;
+    }
+    
+    if (CurTok != tokThen) {
+        return LogError("expected then");
+    }
+    getNextToken();
+    
+    auto Then = ParseExpresion();
+    if (!Then) {
+        return nullptr;
+    }
+    
+    //todo how about only if no else
+    if (CurTok != tokElse) {
+        return LogError("expected else");
+    }
+    getNextToken();
+    
+    auto Else = ParseExpresion();
+    if (!Else) {
+        return nullptr;
+    }
+    
+    return llvm::make_unique<IfExprAST>(std::move(Cond), std::move(Then), std::move(Else));
+}
+
+std::unique_ptr<ExprAST> Parser::ParseForExpr(){
+    getNextToken();
+    
+    std::string IdName = Lexer::IdentifierStr;
+    getNextToken();
+    
+    if (CurTok != '=') {
+        return LogError("expected '=' after for");
+    }
+    getNextToken();
+    
+    auto Start = ParseExpresion();
+    if (!Start) {
+        return nullptr;
+    }
+    if (CurTok != ',') {
+        return LogError("expected ',' after for start value");
+    }
+    getNextToken();
+    
+    auto End = ParseExpresion();
+    if (!End) {
+        return nullptr;
+    }
+    
+    std::unique_ptr<ExprAST> Step;
+    if (CurTok == ',') {
+        getNextToken();
+        Step = ParseExpresion();
+        if (!Step) {
+            return nullptr;
+        }
+    }
+    if (CurTok != tokIn) {
+        return LogError("expected 'in' after for");
+    }
+    getNextToken();
+    
+    auto Body = ParseExpresion();
+    if (!Body) {
+        return nullptr;
+    }
+    
+    return llvm::make_unique<ForExprAst>(IdName, std::move(Start), std::move(End), std::move(Step), std::move(Body));
+}
+
 void Parser::HandleExtern(){
     if (auto ProtoAST = ParseExtern()) {
         if (auto *FnIR = ProtoAST->codegen()) {

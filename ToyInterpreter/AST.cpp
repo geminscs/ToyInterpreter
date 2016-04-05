@@ -124,10 +124,107 @@ Function *FunctionAST::codegen(){
     return nullptr;
 }
 
+Value *IfExprAST::codegen(){
+    Value *CondV = Cond->codegen();
+    if (!CondV) {
+        return nullptr;
+    }
+    
+    CondV = Globals::Builder.CreateFCmpONE(CondV, ConstantFP::get(getGlobalContext(), APFloat(0.0)), "ifcond");
+    
+    Function *TheFunction = Globals::Builder.GetInsertBlock()->getParent();
+    
+    BasicBlock *ThenBB = BasicBlock::Create(getGlobalContext(), "then", TheFunction);
+    BasicBlock *ElseBB = BasicBlock::Create(getGlobalContext(), "else");
+    BasicBlock *MergeBB = BasicBlock::Create(getGlobalContext(), "ifcont");
+    
+    Globals::Builder.CreateCondBr(CondV, ThenBB, ElseBB);
+    
+    Globals::Builder.SetInsertPoint(ThenBB);
+    Value *ThenV = Then->codegen();
+    if (!ThenV) {
+        return nullptr;
+    }
+    
+    Globals::Builder.CreateBr(MergeBB);
+    ThenBB = Globals::Builder.GetInsertBlock();
+    
+    TheFunction->getBasicBlockList().push_back(ElseBB);
+    Globals::Builder.SetInsertPoint(ElseBB);
+    
+    Value *ElseV = Else->codegen();
+    if (!ElseV) {
+        return nullptr;
+    }
+    
+    Globals::Builder.CreateBr(MergeBB);
+    ElseBB = Globals::Builder.GetInsertBlock();
+    
+    TheFunction->getBasicBlockList().push_back(MergeBB);
+    Globals::Builder.SetInsertPoint(MergeBB);
+    PHINode *PN = Globals::Builder.CreatePHI(Type::getDoubleTy(getGlobalContext()), 2, "iftmp");
+    PN->addIncoming(ThenV, ThenBB);
+    PN->addIncoming(ElseV, ElseBB);
+    return PN;
+}
 
 
-
-
+Value *ForExprAst::codegen(){
+    Value *StartVal = Start->codegen();
+    if (!StartVal) {
+        return nullptr;
+    }
+    
+    Function *TheFunction = Globals::Builder.GetInsertBlock()->getParent();
+    BasicBlock *PreheaderBB = Globals::Builder.GetInsertBlock();
+    BasicBlock *LoopBB = BasicBlock::Create(getGlobalContext(), "loop", TheFunction);
+    Globals::Builder.CreateBr(LoopBB);
+    
+    Globals::Builder.SetInsertPoint(LoopBB);
+    PHINode *Variable = Globals::Builder.CreatePHI(Type::getDoubleTy(getGlobalContext()), 2, VarName.c_str());
+    Variable->addIncoming(StartVal, PreheaderBB);
+    
+    Value *OldVal = Globals::NamedValues[VarName];
+    Globals::NamedValues[VarName] = Variable;
+    
+    if (!Body->codegen()) {
+        return nullptr;
+    }
+    
+    Value *StepVal = nullptr;
+    if (Step) {
+        StepVal = Step->codegen();
+        if (!StepVal) {
+            return nullptr;
+        }
+    }
+    else{
+        StepVal = ConstantFP::get(getGlobalContext(), APFloat(1.0));
+    }
+    Value *NextVar = Globals::Builder.CreateFAdd(Variable, StepVal, "nextvar");
+    
+    Value *EndCond = End->codegen();
+    if (!EndCond) {
+        return nullptr;
+    }
+    EndCond = Globals::Builder.CreateFCmpONE(EndCond, ConstantFP::get(getGlobalContext(), APFloat(0.0)), "loopcond");
+    
+    BasicBlock *LoopEndBB = Globals::Builder.GetInsertBlock();
+    BasicBlock *AfterBB = BasicBlock::Create(getGlobalContext(), "afterloop", TheFunction);
+    
+    Globals::Builder.CreateCondBr(EndCond, LoopBB, AfterBB);
+    Globals::Builder.SetInsertPoint(AfterBB);
+    Variable->addIncoming(NextVar, LoopEndBB);
+    
+    if (OldVal) {
+        Globals::NamedValues[VarName] = OldVal;
+    }
+    else{
+        Globals::NamedValues.erase(VarName);
+    }
+    
+    return ConstantFP::getNullValue(Type::getDoubleTy(getGlobalContext()));
+}
 
 
 
