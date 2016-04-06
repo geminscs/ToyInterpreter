@@ -34,6 +34,7 @@ class VaribleExprAST : public ExprAST{
     std::string Name;
 public:
     VaribleExprAST(const std::string &name) : Name(name){}
+    std::string getName();
     virtual Value *codegen() override;
 };
 
@@ -60,6 +61,7 @@ class PrototypeAST{
 public:
     PrototypeAST(const std::string &name, const std::vector<std::string> args): Name(name), Args(std::move(args)){}
     std::string getName();
+    void CreateArgumentAllocas(Function *F);
     Function *codegen();
 };
 
@@ -83,6 +85,15 @@ class ForExprAst : public ExprAST{
     std::unique_ptr<ExprAST> Start, End, Step, Body;
 public:
     ForExprAst(const std::string &varName, std::unique_ptr<ExprAST> start, std::unique_ptr<ExprAST> end, std::unique_ptr<ExprAST> step, std::unique_ptr<ExprAST> body) : VarName(varName), Start(std::move(start)), End(std::move(end)), Step(std::move(step)), Body(std::move(body)){}
+    virtual Value *codegen();
+};
+
+class VarExprAST : public ExprAST{
+    std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
+    std::unique_ptr<ExprAST> Body;
+    
+public:
+    VarExprAST(std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> varNames, std::unique_ptr<ExprAST> body) : VarNames(std::move(varNames)), Body(std::move(body)){}
     virtual Value *codegen();
 };
 #endif /* AST_hpp */

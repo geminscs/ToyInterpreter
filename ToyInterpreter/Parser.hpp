@@ -37,6 +37,7 @@ public:
     static std::unique_ptr<PrototypeAST> ParseExtern();
     static std::unique_ptr<ExprAST> ParseIfExpr();
     static std::unique_ptr<ExprAST> ParseForExpr();
+    static std::unique_ptr<ExprAST> ParseVarExpr();
     static void HandleDefinition();
     static void HandleExtern();
     static void HandleTopLevelExpression();

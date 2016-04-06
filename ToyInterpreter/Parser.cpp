@@ -15,6 +15,7 @@ std::map<char, int> Parser::BinopPrecedence = initMap();
 
 std::map<char, int> Parser::initMap(){
     std::map<char, int> temp;
+    temp['='] = 2;
     temp['<'] = 10;
     temp['+'] = 20;
     temp['-'] = 20;
@@ -124,6 +125,8 @@ std::unique_ptr<ExprAST> Parser::ParsePrimary(){
             return ParseIfExpr();
         case tokFor:
             return ParseForExpr();
+        case tokVar:
+            return ParseVarExpr();
         default:
             return LogError("unknown token when expecting an expression");
     }
@@ -298,6 +301,51 @@ std::unique_ptr<ExprAST> Parser::ParseForExpr(){
     }
     
     return llvm::make_unique<ForExprAst>(IdName, std::move(Start), std::move(End), std::move(Step), std::move(Body));
+}
+
+std::unique_ptr<ExprAST> Parser::ParseVarExpr(){
+    getNextToken();
+    std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
+    
+    if (CurTok != tokIdentifier) {
+        return LogError("expected identifier after var");
+    }
+    
+    while (true) {
+        std::string Name = Lexer::IdentifierStr;
+        getNextToken();
+        
+        std::unique_ptr<ExprAST> Init;
+        if (CurTok == '=') {
+            getNextToken();
+            Init = ParseExpresion();
+            if (!Init) {
+                return nullptr;
+            }
+            
+        }
+        VarNames.push_back(std::make_pair(Name, std::move(Init)));
+        
+        if (CurTok != ',') {
+            break;
+        }
+        getNextToken();
+        if (CurTok != tokIdentifier) {
+            return LogError("expected identifier list after var");
+        }
+    }
+    
+    if (CurTok != tokIn) {
+        return LogError("expected 'in' key after var");
+    }
+    getNextToken();
+    
+    auto Body = ParseExpresion();
+    if (!Body) {
+        return nullptr;
+    }
+    
+    return llvm::make_unique<VarExprAST>(std::move(VarNames), std::move(Body));
 }
 
 void Parser::HandleExtern(){

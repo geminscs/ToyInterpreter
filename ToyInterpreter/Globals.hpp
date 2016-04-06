@@ -26,12 +26,13 @@ public:
     static std::unique_ptr<Module> TheModule;
     static std::unique_ptr<legacy::FunctionPassManager> TheFPM;
     static IRBuilder<> Builder;
-    static std::map<std::string, Value *> NamedValues;
+    static std::map<std::string, AllocaInst *> NamedValues;
     static std::unique_ptr<KaleidoscopeJIT> TheJIT;
     static std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
 public:
     static Value *LogErrorV(const char *str);
     static void InitializeModuleAndPassManger(void);
     static Function *getFunction(std::string name);
+    static AllocaInst *CreateEntryBlockAlloc(Function *TheFunction, const std::string &VarName);
 };
 #endif /* Globals_hpp */

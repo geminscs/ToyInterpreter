@@ -11,7 +11,7 @@
 IRBuilder<> Globals::Builder(getGlobalContext());
 std::unique_ptr<Module> Globals::TheModule;
 std::unique_ptr<legacy::FunctionPassManager> Globals::TheFPM;
-std::map<std::string, Value *> Globals::NamedValues;
+std::map<std::string, AllocaInst *> Globals::NamedValues;
 std::unique_ptr<KaleidoscopeJIT> Globals::TheJIT;
 std::map<std::string, std::unique_ptr<PrototypeAST>> Globals::FunctionProtos;
 
@@ -31,6 +31,12 @@ void Globals::InitializeModuleAndPassManger(){
     TheFPM->add(createGVNPass());
     TheFPM->add(createCFGSimplificationPass());
     
+    //std::unique_ptr<ExecutionEngine> TheExecutionEngine = new ExecutionEngine();
+    //TheFPM->add(new DataLayout(*TheExecutionEngine->getDataLayout));
+    //TheFPM->add(createPromoteMemoryToRegisterPass());
+    //TheFPM->add(createInstructionCombiningPass());
+    //TheFPM->add(createReassociatePass());
+    
     TheFPM->doInitialization();
 }
 
@@ -45,4 +51,9 @@ Function *Globals::getFunction(std::string name){
     }
     
     return nullptr;
+}
+
+AllocaInst *Globals::CreateEntryBlockAlloc(llvm::Function *TheFunction, const std::string &VarName){
+    IRBuilder<> TmpB(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
+    return TmpB.CreateAlloca(Type::getDoubleTy(getGlobalContext()), 0, VarName.c_str());
 }

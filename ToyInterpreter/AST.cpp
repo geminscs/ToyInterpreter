@@ -19,10 +19,32 @@ Value *VaribleExprAST::codegen(){
     if(!v){
         Globals::LogErrorV("unknown variable name");
     }
-    return v;
+    return Globals::Builder.CreateLoad(v, Name.c_str());
+}
+
+std::string VaribleExprAST::getName(){
+    return Name;
 }
 
 Value *BinaryExprAST::codegen(){
+    if (Op == '=') {
+        VaribleExprAST *LHSE = (VaribleExprAST *)(LHS.get());
+        if (!LHSE) {
+            return Globals::LogErrorV("destination of '=' must be a variable");
+        }
+        Value *Val = RHS->codegen();
+        if (!Val) {
+            return nullptr;
+        }
+        
+        Value *Var = Globals::NamedValues[LHSE->getName()];
+        if (!Var) {
+            return Globals::LogErrorV("unknown variable name");
+        }
+        
+        Globals::Builder.CreateStore(Val, Var);
+        return Val;
+    }
     Value *L = LHS->codegen();
     Value *R = RHS->codegen();
     if (!L || !R) {
@@ -84,6 +106,15 @@ std::string PrototypeAST::getName(){
     return Name;
 }
 
+void PrototypeAST::CreateArgumentAllocas(llvm::Function *F){
+    Function::arg_iterator AI = F->arg_begin();
+    for (unsigned long Idx = 0, e = Args.size(); Idx != e; Idx ++, AI ++) {
+        AllocaInst *Alloca = Globals::CreateEntryBlockAlloc(F, Args[Idx]);
+        //Globals::Builder.CreateStore(AI, Alloca);
+        Globals::NamedValues[Args[Idx]] = Alloca;
+    }
+}
+
 Function *FunctionAST::codegen(){
     /*Function *TheFunction = Globals::TheModule->getFunction(Proto->getName());
     if (!TheFunction) {
@@ -110,7 +141,10 @@ Function *FunctionAST::codegen(){
     
     Globals::NamedValues.clear();
     for(auto &Arg : TheFunction->args()){
-        Globals::NamedValues[Arg.getName()] = &Arg;
+        //Globals::NamedValues[Arg.getName()] = &Arg;
+        AllocaInst *Alloca = Globals::CreateEntryBlockAlloc(TheFunction, Arg.getName());
+        Globals::Builder.CreateStore(&Arg, Alloca);
+        Globals::NamedValues[Arg.getName()] = Alloca;
     }
     
     if (Value *RetVal = Body->codegen()) {
@@ -170,22 +204,25 @@ Value *IfExprAST::codegen(){
 
 
 Value *ForExprAst::codegen(){
+    Function *TheFunction = Globals::Builder.GetInsertBlock()->getParent();
+    AllocaInst *Alloca = Globals::CreateEntryBlockAlloc(TheFunction, VarName);
+    
     Value *StartVal = Start->codegen();
     if (!StartVal) {
         return nullptr;
     }
+    Globals::Builder.CreateStore(StartVal, Alloca);
     
-    Function *TheFunction = Globals::Builder.GetInsertBlock()->getParent();
-    BasicBlock *PreheaderBB = Globals::Builder.GetInsertBlock();
+    //BasicBlock *PreheaderBB = Globals::Builder.GetInsertBlock();
     BasicBlock *LoopBB = BasicBlock::Create(getGlobalContext(), "loop", TheFunction);
     Globals::Builder.CreateBr(LoopBB);
     
     Globals::Builder.SetInsertPoint(LoopBB);
-    PHINode *Variable = Globals::Builder.CreatePHI(Type::getDoubleTy(getGlobalContext()), 2, VarName.c_str());
-    Variable->addIncoming(StartVal, PreheaderBB);
+    //PHINode *Variable = Globals::Builder.CreatePHI(Type::getDoubleTy(getGlobalContext()), 2, VarName.c_str());
+    //Variable->addIncoming(StartVal, PreheaderBB);
     
-    Value *OldVal = Globals::NamedValues[VarName];
-    Globals::NamedValues[VarName] = Variable;
+    AllocaInst *OldVal = Globals::NamedValues[VarName];
+    Globals::NamedValues[VarName] = Alloca;
     
     if (!Body->codegen()) {
         return nullptr;
@@ -201,20 +238,25 @@ Value *ForExprAst::codegen(){
     else{
         StepVal = ConstantFP::get(getGlobalContext(), APFloat(1.0));
     }
-    Value *NextVar = Globals::Builder.CreateFAdd(Variable, StepVal, "nextvar");
+    //Value *NextVar = Globals::Builder.CreateFAdd(Variable, StepVal, "nextvar");
     
     Value *EndCond = End->codegen();
     if (!EndCond) {
         return nullptr;
     }
+    
+    Value *CurVar = Globals::Builder.CreateLoad(Alloca, VarName.c_str());
+    Value *NextVar = Globals::Builder.CreateFAdd(CurVar, StepVal, "nextvar");
+    //Value *NextVar = Globals::Builder.CreateLoad(CurVar, StepVal, "nextvar");
+    Globals::Builder.CreateStore(NextVar, Alloca);
     EndCond = Globals::Builder.CreateFCmpONE(EndCond, ConstantFP::get(getGlobalContext(), APFloat(0.0)), "loopcond");
     
-    BasicBlock *LoopEndBB = Globals::Builder.GetInsertBlock();
+    //BasicBlock *LoopEndBB = Globals::Builder.GetInsertBlock();
     BasicBlock *AfterBB = BasicBlock::Create(getGlobalContext(), "afterloop", TheFunction);
     
     Globals::Builder.CreateCondBr(EndCond, LoopBB, AfterBB);
     Globals::Builder.SetInsertPoint(AfterBB);
-    Variable->addIncoming(NextVar, LoopEndBB);
+    //Variable->addIncoming(NextVar, LoopEndBB);
     
     if (OldVal) {
         Globals::NamedValues[VarName] = OldVal;
@@ -227,6 +269,40 @@ Value *ForExprAst::codegen(){
 }
 
 
+Value *VarExprAST::codegen(){
+    std::vector<AllocaInst *> OldBindings;
+    Function *TheFunction = Globals::Builder.GetInsertBlock()->getParent();
+    for (unsigned long i = 0, e = VarNames.size(); i != e; i ++) {
+        const std::string &VarName = VarNames[i].first;
+        ExprAST *Init = VarNames[i].second.get();
+        Value *InitVal;
+        if (Init) {
+            InitVal = Init->codegen();
+            if (!InitVal) {
+                return nullptr;
+            }
+        }
+        else{
+            InitVal = ConstantFP::get(getGlobalContext(), APFloat(0.0));
+        }
+        
+        AllocaInst *Alloca = Globals::CreateEntryBlockAlloc(TheFunction, VarName);
+        Globals::Builder.CreateStore(InitVal, Alloca);
+        OldBindings.push_back(Globals::NamedValues[VarName]);
+        Globals::NamedValues[VarName] = Alloca;
+    }
+    
+    Value *BodyVal = Body->codegen();
+    if (!BodyVal) {
+        return nullptr;
+    }
+    
+    for (unsigned long i = 0, e = VarNames.size(); i != e; ++i){
+        Globals::NamedValues[VarNames[i].first] = OldBindings[i];
+    }
+    
+    return BodyVal;
+}
 
 
 

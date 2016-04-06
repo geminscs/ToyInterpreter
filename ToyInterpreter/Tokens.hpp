@@ -19,7 +19,8 @@ enum Token{
     tokThen = -7,
     tokElse = -8,
     tokFor = -9,
-    tokIn = -10
+    tokIn = -10,
+    tokVar = -11
 };
 
 class Lexer{

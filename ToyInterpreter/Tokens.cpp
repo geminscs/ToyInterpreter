@@ -49,6 +49,9 @@ int Lexer::getTok(){
         if (IdentifierStr == "in") {
             return tokIn;
         }
+        if (IdentifierStr == "var") {
+            return tokVar;
+        }
         return tokIdentifier;
     }
     //numbers
