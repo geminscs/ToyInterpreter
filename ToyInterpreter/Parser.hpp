@@ -18,9 +18,9 @@
 class Parser{
 public:
     static int CurTok;
-    static std::map<char, int> BinopPrecedence;
+    //static std::map<char, int> BinopPrecedence;
 public:
-    static std::map<char, int> initMap();
+    //static std::map<char, int> initMap();
     static int getNextToken();
     static int GetTokPrecedence();
     static std::unique_ptr<ExprAST> LogError(const char *str);
@@ -38,6 +38,7 @@ public:
     static std::unique_ptr<ExprAST> ParseIfExpr();
     static std::unique_ptr<ExprAST> ParseForExpr();
     static std::unique_ptr<ExprAST> ParseVarExpr();
+    static std::unique_ptr<ExprAST> ParseUnary();
     static void HandleDefinition();
     static void HandleExtern();
     static void HandleTopLevelExpression();

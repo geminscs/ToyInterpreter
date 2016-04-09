@@ -52,6 +52,12 @@ int Lexer::getTok(){
         if (IdentifierStr == "var") {
             return tokVar;
         }
+        if (IdentifierStr == "binary") {
+            return tokBinary;
+        }
+        if (IdentifierStr == "unary") {
+            return tokUnary;
+        }
         return tokIdentifier;
     }
     //numbers

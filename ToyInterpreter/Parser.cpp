@@ -10,7 +10,7 @@
 #include "Globals.hpp"
 
 int Parser::CurTok = 0;
-std::map<char, int> Parser::BinopPrecedence = initMap();
+/*std::map<char, int> Parser::BinopPrecedence = initMap();
 
 
 std::map<char, int> Parser::initMap(){
@@ -22,7 +22,7 @@ std::map<char, int> Parser::initMap(){
     temp['*'] = 40;
     temp['/'] = 40;
     return temp;
-}
+}*/
 
 
 int Parser::getNextToken(){
@@ -34,7 +34,7 @@ int Parser::GetTokPrecedence(){
         return -1;
     }
     
-    int TokPrec = BinopPrecedence[CurTok];
+    int TokPrec = Globals::BinopPrecedence[CurTok];
     if(TokPrec <= 0){
         return -1;
     }
@@ -52,7 +52,7 @@ std::unique_ptr<PrototypeAST> Parser::LogErrorP(const char *str){
 }
 
 std::unique_ptr<ExprAST> Parser::ParseExpresion(){
-    auto LHS = ParsePrimary();
+    auto LHS = ParseUnary();
     if (!LHS) {
         return nullptr;
     }
@@ -140,7 +140,7 @@ std::unique_ptr<ExprAST> Parser::ParseBinopRHS(int ExprPrec, std::unique_ptr<Exp
         
         int BinOp = CurTok;
         getNextToken();
-        auto RHS = ParsePrimary();
+        auto RHS = ParseUnary();
         if(!RHS){
             return nullptr;
         }
@@ -159,12 +159,53 @@ std::unique_ptr<ExprAST> Parser::ParseBinopRHS(int ExprPrec, std::unique_ptr<Exp
 
 //todo function definition: def foo(x y) ->def foo(x, y) end
 std::unique_ptr<PrototypeAST> Parser::ParsePrototype(){
-    if (CurTok != tokIdentifier) {
+    /*if (CurTok != tokIdentifier) {
         return LogErrorP("expected function name in prototype");
     }
     
     std::string funName = Lexer::IdentifierStr;
-    getNextToken();
+    getNextToken();*/
+    
+    std::string FnName;
+    unsigned Kind = 0;
+    unsigned BinaryPrec = 30;
+    
+    switch (CurTok) {
+        case tokIdentifier:
+            FnName = Lexer::IdentifierStr;
+            Kind = 0;
+            getNextToken();
+            break;
+        case tokBinary:
+            getNextToken();
+            if (!isascii(CurTok)) {
+                return LogErrorP("expected binary operator");
+            }
+            FnName = "binary";
+            FnName += (char)CurTok;
+            Kind = 2;
+            getNextToken();
+            if (CurTok == tokNum) {
+                if (Lexer::NumVal < 1 || Lexer::NumVal > 100) {
+                    return LogErrorP("invalid precedence");
+                }
+                BinaryPrec = (unsigned)Lexer::NumVal;
+                getNextToken();
+            }
+            break;
+        case tokUnary:
+            getNextToken();
+            if (!isascii(CurTok)) {
+                return LogErrorP("expected unary operator");
+            }
+            FnName = "unary";
+            FnName += (char)CurTok;
+            Kind = 1;
+            getNextToken();
+            break;
+        default:
+            return LogErrorP("expected function name in prototype");
+    }
     
     if (CurTok != '(') {
         return LogErrorP("expected '(' in prototype");
@@ -180,8 +221,11 @@ std::unique_ptr<PrototypeAST> Parser::ParsePrototype(){
     }
     
     getNextToken();
+    if (Kind && Args.size() != Kind) {
+        return LogErrorP("invalid number of operands for operator");
+    }
     
-    return make_unique<PrototypeAST>(funName, std::move(Args));
+    return make_unique<PrototypeAST>(FnName, std::move(Args), Kind != 0, BinaryPrec);
 }
 
 std::unique_ptr<FunctionAST> Parser::ParseDefinition(){
@@ -346,6 +390,19 @@ std::unique_ptr<ExprAST> Parser::ParseVarExpr(){
     }
     
     return llvm::make_unique<VarExprAST>(std::move(VarNames), std::move(Body));
+}
+
+std::unique_ptr<ExprAST> Parser::ParseUnary(){
+    if (!isascii(CurTok) || CurTok == '(' || CurTok == ',') {
+        return ParsePrimary();
+    }
+    
+    int Opc = CurTok;
+    getNextToken();
+    if (auto Operand = ParseUnary()) {
+        return llvm::make_unique<UnaryExprAST>(Opc, std::move(Operand));
+    }
+    return nullptr;
 }
 
 void Parser::HandleExtern(){

@@ -15,6 +15,20 @@ std::map<std::string, AllocaInst *> Globals::NamedValues;
 std::unique_ptr<KaleidoscopeJIT> Globals::TheJIT;
 std::map<std::string, std::unique_ptr<PrototypeAST>> Globals::FunctionProtos;
 
+std::map<char, int> Globals::BinopPrecedence = initMap();
+
+
+std::map<char, int> Globals::initMap(){
+    std::map<char, int> temp;
+    temp['='] = 2;
+    temp['<'] = 10;
+    temp['+'] = 20;
+    temp['-'] = 20;
+    temp['*'] = 40;
+    temp['/'] = 40;
+    return temp;
+}
+
 Value *Globals::LogErrorV(const char *str){
     std::cout<<str<<std::endl;
     return nullptr;

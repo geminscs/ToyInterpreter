@@ -64,8 +64,14 @@ Value *BinaryExprAST::codegen(){
             L = Globals::Builder.CreateFCmpULT(L, R, "cmptmp");
             return Globals::Builder.CreateUIToFP(L, Type::getDoubleTy(getGlobalContext()),"booltmp");
         default:
-            return Globals::LogErrorV("invalid binary operator");
+            //return Globals::LogErrorV("invalid binary operator");
+            break;
     }
+    
+    Function *F = Globals::getFunction(std::string("binary") + Op);
+    assert(F && "binary operator not found!");
+    Value *Ops[2] = {L, R};
+    return Globals::Builder.CreateCall(F, Ops, "binop");
 }
 
 Value *CallExprAST::codegen(){
@@ -115,6 +121,23 @@ void PrototypeAST::CreateArgumentAllocas(llvm::Function *F){
     }
 }
 
+bool PrototypeAST::isUnaryOp(){
+    return IsOperator && Args.size() == 1;
+}
+
+bool PrototypeAST::isBinaryOp(){
+    return IsOperator && Args.size() == 2;
+}
+
+char PrototypeAST::getOperatorName(){
+    assert(isUnaryOp() || isBinaryOp());
+    return Name[Name.size() - 1];
+}
+
+unsigned PrototypeAST::getBinaryPrecedence(){
+    return Precedence;
+}
+
 Function *FunctionAST::codegen(){
     /*Function *TheFunction = Globals::TheModule->getFunction(Proto->getName());
     if (!TheFunction) {
@@ -134,6 +157,10 @@ Function *FunctionAST::codegen(){
     Function *TheFunction = Globals::getFunction(P.getName());
     if (!TheFunction) {
         return nullptr;
+    }
+    
+    if (P.isBinaryOp()) {
+        Globals::BinopPrecedence[P.getOperatorName()] = P.getBinaryPrecedence();
     }
     
     BasicBlock *BB = BasicBlock::Create(getGlobalContext(), "entry", TheFunction);
@@ -304,7 +331,19 @@ Value *VarExprAST::codegen(){
     return BodyVal;
 }
 
-
+Value *UnaryExprAST::codegen(){
+    Value *OperandV = Operend->codegen();
+    if (!Operend) {
+        return nullptr;
+    }
+    
+    Function *F = Globals::TheModule->getFunction(std::string("unary") + Opcode);
+    if (!F) {
+        return Globals::LogErrorV("unknown unary operator");
+    }
+    
+    return Globals::Builder.CreateCall(F, OperandV, "unop");
+}
 
 
 

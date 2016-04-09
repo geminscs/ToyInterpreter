@@ -58,9 +58,15 @@ public:
 class PrototypeAST{
     std::string Name;
     std::vector<std::string> Args;
+    bool IsOperator;
+    unsigned Precedence;
 public:
-    PrototypeAST(const std::string &name, const std::vector<std::string> args): Name(name), Args(std::move(args)){}
+    PrototypeAST(const std::string &name, const std::vector<std::string> args, bool isOperator = false, unsigned precedence = 0): Name(name), Args(std::move(args)), IsOperator(isOperator), Precedence(precedence){}
     std::string getName();
+    bool isUnaryOp();
+    bool isBinaryOp();
+    char getOperatorName();
+    unsigned getBinaryPrecedence();
     void CreateArgumentAllocas(Function *F);
     Function *codegen();
 };
@@ -94,6 +100,15 @@ class VarExprAST : public ExprAST{
     
 public:
     VarExprAST(std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> varNames, std::unique_ptr<ExprAST> body) : VarNames(std::move(varNames)), Body(std::move(body)){}
+    virtual Value *codegen();
+};
+
+class UnaryExprAST : public ExprAST{
+    char Opcode;
+    std::unique_ptr<ExprAST> Operend;
+
+public:
+    UnaryExprAST(char opcode, std::unique_ptr<ExprAST> operend) : Opcode(opcode), Operend(std::move(operend)) {}
     virtual Value *codegen();
 };
 #endif /* AST_hpp */
